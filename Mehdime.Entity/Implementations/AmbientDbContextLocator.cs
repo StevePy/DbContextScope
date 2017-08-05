@@ -16,5 +16,18 @@ namespace Mehdime.Entity
             var ambientDbContextScope = DbContextScope.GetAmbientScope();
             return ambientDbContextScope == null ? null : ambientDbContextScope.DbContexts.Get<TDbContext>();
         }
-    }
+
+		public TDbContext Get<TDbContext>(string connectionString) where TDbContext : DbContext
+		{
+			var ambientDbContextScope = DbContextScope.GetAmbientScope();
+			return ambientDbContextScope == null ? null : ambientDbContextScope.DbContexts.Get<TDbContext>(connectionString);
+		}
+
+		public TDbContext Get<TDbContext>(IDbTenant tenant) where TDbContext : TenantedDbContext
+		{
+			var ambientDbContextScope = DbContextScope.GetAmbientScope();
+			return ambientDbContextScope == null ? null : ambientDbContextScope.DbContexts.Get<TDbContext>(tenant);
+		}
+
+	}
 }

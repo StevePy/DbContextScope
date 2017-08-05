@@ -29,7 +29,7 @@ namespace Mehdime.Entity
     /// </summary>
     public class DbContextCollection : IDbContextCollection
     {
-        private Dictionary<Type, DbContext> _initializedDbContexts;
+        private Dictionary<string, DbContext> _initializedDbContexts;
         private Dictionary<DbContext, DbContextTransaction> _transactions; 
         private IsolationLevel? _isolationLevel;
         private readonly IDbContextFactory _dbContextFactory;
@@ -37,14 +37,14 @@ namespace Mehdime.Entity
         private bool _completed;
         private bool _readOnly;
 
-        internal Dictionary<Type, DbContext> InitializedDbContexts { get { return _initializedDbContexts; } }
+        internal Dictionary<string, DbContext> InitializedDbContexts { get { return _initializedDbContexts; } }
 
         public DbContextCollection(bool readOnly = false, IsolationLevel? isolationLevel = null, IDbContextFactory dbContextFactory = null)
         {
             _disposed = false;
             _completed = false;
 
-            _initializedDbContexts = new Dictionary<Type, DbContext>();
+            _initializedDbContexts = new Dictionary<string, DbContext>();
             _transactions = new Dictionary<DbContext, DbContextTransaction>();
 
             _readOnly = readOnly;
@@ -57,9 +57,9 @@ namespace Mehdime.Entity
             if (_disposed)
                 throw new ObjectDisposedException("DbContextCollection");
 
-            var requestedType = typeof(TDbContext);
+            var requestedType = typeof(TDbContext).ToString();
 
-            if (!_initializedDbContexts.ContainsKey(requestedType))
+            if (!_initializedDbContexts.ContainsKey(requestedType.ToString()))
             {
                 // First time we've been asked for this particular DbContext type.
                 // Create one, cache it and start its database transaction if needed.
@@ -84,7 +84,79 @@ namespace Mehdime.Entity
             return _initializedDbContexts[requestedType]  as TDbContext;
         }
 
-        public int Commit()
+		/// <summary>
+		/// Get method that supports providing a connection string.
+		/// </summary>
+		public TDbContext Get<TDbContext>(string connectionString) where TDbContext : DbContext
+		{
+			if (_disposed)
+				throw new ObjectDisposedException("DbContextCollection");
+
+			var requestedType = typeof(TDbContext);
+			var requestedContextKey = string.Format("{0}_{1}", requestedType, connectionString);
+
+			if (!_initializedDbContexts.ContainsKey(requestedType.ToString()))
+			{
+				// First time we've been asked for this particular DbContext type.
+				// Create one, cache it and start its database transaction if needed.
+				var dbContext = _dbContextFactory != null
+					? _dbContextFactory.CreateDbContext<TDbContext>()
+					: (TDbContext) Activator.CreateInstance(requestedType, connectionString);
+
+				_initializedDbContexts.Add(requestedContextKey, dbContext);
+
+				if (_readOnly)
+				{
+					dbContext.Configuration.AutoDetectChangesEnabled = false;
+				}
+
+				if (_isolationLevel.HasValue)
+				{
+					var tran = dbContext.Database.BeginTransaction(_isolationLevel.Value);
+					_transactions.Add(dbContext, tran);
+				}
+			}
+
+			return _initializedDbContexts[requestedContextKey] as TDbContext;
+		}
+
+		/// <summary>
+		/// Get method that supports providing a connection string.
+		/// </summary>
+		public TDbContext Get<TDbContext>(IDbTenant tenant) where TDbContext : TenantedDbContext
+		{
+			if (_disposed)
+				throw new ObjectDisposedException("DbContextCollection");
+
+			var requestedType = typeof(TDbContext);
+			var requestedContextKey = string.Format("{0}_{1}_{2}", requestedType, tenant?.ConnectionString ?? "na", tenant?.SchemaName ?? "na");
+
+			if (!_initializedDbContexts.ContainsKey(requestedType.ToString()))
+			{
+				// First time we've been asked for this particular DbContext type.
+				// Create one, cache it and start its database transaction if needed.
+				var dbContext = _dbContextFactory != null
+					? _dbContextFactory.CreateDbContext<TDbContext>()
+					: (TDbContext)Activator.CreateInstance(requestedType, tenant);
+
+				_initializedDbContexts.Add(requestedContextKey, dbContext);
+
+				if (_readOnly)
+				{
+					dbContext.Configuration.AutoDetectChangesEnabled = false;
+				}
+
+				if (_isolationLevel.HasValue)
+				{
+					var tran = dbContext.Database.BeginTransaction(_isolationLevel.Value);
+					_transactions.Add(dbContext, tran);
+				}
+			}
+
+			return _initializedDbContexts[requestedContextKey] as TDbContext;
+		}
+
+		public int Commit()
         {
             if (_disposed)
                 throw new ObjectDisposedException("DbContextCollection");

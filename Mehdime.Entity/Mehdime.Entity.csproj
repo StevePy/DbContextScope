@@ -61,6 +61,8 @@
     <Compile Include="Interfaces\IDbContextReadOnlyScope.cs" />
     <Compile Include="Interfaces\IDbContextScope.cs" />
     <Compile Include="Interfaces\IDbContextScopeFactory.cs" />
+    <Compile Include="Interfaces\IDbTenant.cs" />
+    <Compile Include="Implementations\TenantedDbContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

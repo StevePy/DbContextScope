@@ -21,5 +21,9 @@ namespace Mehdime.Entity
         /// Otherwise returns null. 
         /// </summary>
         TDbContext Get<TDbContext>() where TDbContext : DbContext;
+
+		TDbContext Get<TDbContext>(string connectionString) where TDbContext : DbContext;
+
+		TDbContext Get<TDbContext>(IDbTenant tenant) where TDbContext : TenantedDbContext;
     }
 }
