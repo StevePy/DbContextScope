@@ -1,3 +1,24 @@
+Schema / Database Tenant support for DbContextScope
+===================================================
+[2017-08-06: Steve Py]
+This fork of Mehdime's excellent DbContextScope unit of work pattern was created to facilitate a multi-tenant implementation where-by each tenant is given a separate database or schema within
+a database. This is an alternative to relying on a single database for all tenants. Different situations will suite single database vs. schema-per-tenant. In my case, with smaller databases across a large number of tenants where I did not want to risk any cross-tenant pollution, the schema-separation approach was preferred. I am a strong advocate of the DbContextScope pattern so I wanted to 
+adapt this pattern to suit situations where you provide a connection string for the context creation or want to adopt a structure for the tenant approach. The IDbContextFactory definition was 
+expanded to support both a connection string being passed through as well as the new IDbTenant structure.
+
+### Overview
+IDbTenant - Defines the information needed for a tenant. This is:
+ConnectionString - Connection string or connection string name (config) for that tenant's database.
+SchemaName - Optional schema name for the tenant.
+
+TenantedDbContext - A wrapper for the DbContext that accepts tenant information. This class was required because to support schema-based tenant separation the schema name will need to be passed
+through to the mapping initialization.
+
+IDbContextFactory - This interface was updated to support creating instances and passing the connection string or Tenant information. This modification was needed in order to support alternative
+data sources where-by you want to pass a connection string (rather than a web.config connection string name) to the DbContext. In my case I was using NpgSql for PostgreSQL and ran into an issue 
+where I compose connection strings for the tenant database location. EF defaults to SQL Server connection string parsing. IDbContextFactory allows me to set up a connection manually using the NpgSql 
+provider. This isn't needed for instance if you want to use a Connection string in the web.config /w NpgSql since the provider is set up in the configuration.
+
 DbContextScope
 ==============
 
