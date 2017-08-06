@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Data.Entity;
 
 
@@ -19,6 +20,10 @@ namespace Mehdime.Entity
 
 		public TenantedDbContext(IDbTenant tenant)
 			: base(tenant?.ConnectionString)
+		{ }
+
+		public TenantedDbContext(DbConnection connection, bool contextOwnsConnection)
+			: base(connection, contextOwnsConnection )
 		{ }
 
 	}

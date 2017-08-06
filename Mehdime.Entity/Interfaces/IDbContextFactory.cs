@@ -34,5 +34,9 @@ namespace Mehdime.Entity
     public interface IDbContextFactory
     {
 		TDbContext CreateDbContext<TDbContext>() where TDbContext : DbContext;
-    }
+
+		TDbContext CreateDbContext<TDbContext>(string connectionString) where TDbContext : DbContext;
+
+		TDbContext CreateDbContext<TDbContext>(IDbTenant tenant) where TDbContext : DbContext;
+	}
 }

@@ -100,7 +100,7 @@ namespace Mehdime.Entity
 				// First time we've been asked for this particular DbContext type.
 				// Create one, cache it and start its database transaction if needed.
 				var dbContext = _dbContextFactory != null
-					? _dbContextFactory.CreateDbContext<TDbContext>()
+					? _dbContextFactory.CreateDbContext<TDbContext>(connectionString)
 					: (TDbContext) Activator.CreateInstance(requestedType, connectionString);
 
 				_initializedDbContexts.Add(requestedContextKey, dbContext);
@@ -136,7 +136,7 @@ namespace Mehdime.Entity
 				// First time we've been asked for this particular DbContext type.
 				// Create one, cache it and start its database transaction if needed.
 				var dbContext = _dbContextFactory != null
-					? _dbContextFactory.CreateDbContext<TDbContext>()
+					? _dbContextFactory.CreateDbContext<TDbContext>(tenant)
 					: (TDbContext)Activator.CreateInstance(requestedType, tenant);
 
 				_initializedDbContexts.Add(requestedContextKey, dbContext);
